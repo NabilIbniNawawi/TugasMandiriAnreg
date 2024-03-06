@@ -1,0 +1,372 @@
+---
+title: "Tugas Individu ANREG"
+author: "Nabil Ibni Nawawi"
+date: "2024-03-05"
+output: html_document
+---
+
+```{r}
+library(readxl)
+library(ggplot2)
+```
+
+```{r}
+data <- read_excel("C:/Users/Nabil Ibni Nawawi/Documents/KULIAH/Semester 4/Analisis Regresi/Tugas mandiri hari ini.xlsx")
+data
+```
+
+# Membuat scatter plot dari data
+```{r}
+ggplot(data, aes_string(x = "X", y = "Y")) +
+  geom_point()
+```
+Terlihat dari scatter plot bukan linear (pola parabola dengan Beta_1 < 0 dan Beta_2 >0)
+
+
+```{r}
+model <- lm(Y~X, data=data)
+summary(model)
+```
+## Autokorelasi
+# Durbin-Watson
+
+Uji formal untuk mendeteksi autokorelasi sisaan dapat dilakukan dengan uji Durbin-Watson menggunakan fungsi durbinWatsonTest. Uji ini memiliki hipotesis sebagai berikut,
+
+H0:E[ϵi,ϵj]=0 (tidak ada autokorelasi)
+
+H1:E[ϵi,ϵj]≠0 (ada autokorelasi)
+
+```{r}
+library(lmtest)
+(uji_autokol <-dwtest(model,alternative="two.sided"))
+```
+
+```{r}
+ifelse(uji_autokol$p < 0.05, "Ada Autokorelasi", "Tidak Ada Autokorelasi")
+```
+
+Dari uji autokorelasi menggunakan Durbin-Watson test diatas dapat diketahui bahwa sisaan tidak saling bebas (ada autokorelasi)
+
+## Normalitas
+# Q-Q plot
+```{r}
+resid1 <- model$resid
+qqnorm(resid1)
+qqline(resid1,col="red")
+```
+
+# Kolmogorov-Smirnov
+Uji formal untuk mendeteksi mormalitas sisaan dapat dilakukan dengan uji Kolmogorov-Smirnov menggunakan fungsi lillie.test. Uji ini memiliki hipotesis sebagai berikut,
+
+$H_0 : N $ (sisaan menyebar Normal)
+
+$H_1 : N $ (sisaan tidak menyebar Normal)
+
+```{r}
+library(nortest)
+(norm_model <- lillie.test(resid1))
+```
+```{r}
+ifelse(norm_model$p.value < 0.05, "Sisaan Tidak Menyebar Normal", "Sisaan Menyebar Normal")
+```
+Dari 2 test/uji diatas dapat disimpulkan sisaan menyebar normal
+
+## Homoskedatisitas
+# Breusch-Pagan
+Uji formal untuk mendeteksi homogenitas ragam sisaan dapat dilakukan dengan uji Breusch-Pagan menggunakan fungsi bptest. Uji ini memiliki hipotesis sebagai berikut,
+
+H0:var[ϵ]=σ2I (ragam homogen)
+
+H1:var[ϵ]≠σ2I (ragam tidak homogen)
+
+```{r}
+library(lmtest)
+(homogen_model <- bptest(model))
+```
+
+```{r}
+ifelse(homogen_model$p.value < 0.05, "Ragam Tidak Homogen", "Ragam Homogen")
+```
+
+## Penanganan Kondisi Tak Standar
+
+Karena model merupakan pola parabola dengan Beta_1 < 0 dan Beta_2 >0, maka dilakukan transformasi dengan memperkecil Y menjadi sqrt(Y) (Y pangkat 1/2)
+
+cara 1: memperkecil Y
+```{r}
+x <- data$X
+y_tr <- sqrt(data$Y)
+data_tr <- data.frame(cbind(y_tr,x))
+head(data_tr)
+```
+
+```{r}
+model_tr <- lm(y_tr~x,data=data_tr)
+summary(model_tr)
+```
+
+cara 2: memperkecil X
+```{r}
+x_tr <- sqrt(data$X)
+y <- data$Y
+data_tr2 <- data.frame(cbind(y,x_tr))
+head(data_tr2)
+```
+
+```{r}
+model_tr2 <- lm(y~x_tr,data=data_tr2)
+summary(model_tr2)
+```
+
+cara 3: memperkecil X dan Y
+```{r}
+x_tr3 <- sqrt(data$X)
+y_tr3 <- sqrt(data$Y)
+data_tr3 <- data.frame(cbind(y_tr3,x_tr3))
+head(data_tr3)
+```
+
+```{r}
+model_tr3 <- lm(y_tr3~x_tr3,data=data_tr3)
+summary(model_tr3)
+```
+
+# Membuat scatter plot dari data_tr
+
+```{r}
+library(ggplot2)
+ggplot(data_tr, aes_string(x = "x", y = "y_tr")) +
+  geom_point()
+```
+
+# Membuat scatter plot dari data_tr2
+
+```{r}
+library(ggplot2)
+ggplot(data_tr2, aes_string(x = "x_tr", y = "y")) +
+  geom_point()
+```
+
+# Membuat scatter plot dari data_tr3
+
+```{r}
+library(ggplot2)
+ggplot(data_tr3, aes_string(x = "x_tr3", y = "y_tr3")) +
+  geom_point()
+```
+
+## Autokorelasi
+# Durbin-Watson
+
+Uji formal untuk mendeteksi autokorelasi sisaan dapat dilakukan dengan uji Durbin-Watson menggunakan fungsi durbinWatsonTest. Uji ini memiliki hipotesis sebagai berikut,
+
+H0:E[ϵi,ϵj]=0 (tidak ada autokorelasi)
+
+H1:E[ϵi,ϵj]≠0 (ada autokorelasi)
+
+model_tr:
+```{r}
+library(lmtest)
+(uji_autokol_tr <-dwtest(model_tr,alternative="two.sided"))
+```
+
+```{r}
+ifelse(uji_autokol_tr$p < 0.05, "Ada Autokorelasi", "Tidak Ada Autokorelasi")
+```
+
+Dari uji autokorelasi menggunakan Durbin-Watson test diatas dapat diketahui bahwa sisaan tidak saling bebas (ada autokorelasi)
+
+model_tr2:
+```{r}
+library(lmtest)
+(uji_autokol_tr2 <-dwtest(model_tr2,alternative="two.sided"))
+```
+
+```{r}
+ifelse(uji_autokol_tr2$p < 0.05, "Ada Autokorelasi", "Tidak Ada Autokorelasi")
+```
+
+Dari uji autokorelasi menggunakan Durbin-Watson test diatas dapat diketahui bahwa sisaan tidak saling bebas (ada autokorelasi)
+
+model_tr3:
+```{r}
+library(lmtest)
+(uji_autokol_tr3 <-dwtest(model_tr3,alternative="two.sided"))
+```
+
+```{r}
+ifelse(uji_autokol_tr3$p < 0.05, "Ada Autokorelasi", "Tidak Ada Autokorelasi")
+```
+
+Dari uji autokorelasi menggunakan Durbin-Watson test diatas dapat diketahui bahwa sisaan saling bebas (tidak ada autokorelasi)
+
+## Normalitas
+# Q-Q plot
+```{r}
+resid2 <- model_tr$resid
+qqnorm(resid2)
+qqline(resid2,col="red")
+```
+
+Q-Q plot dari residual model_tr3
+```{r}
+resid_tr3 <- model_tr3$resid
+qqnorm(resid_tr3)
+qqline(resid_tr3,col="red")
+```
+
+galat Menyebar normal
+
+# Kolmogorov-Smirnov
+Uji formal untuk mendeteksi mormalitas sisaan dapat dilakukan dengan uji Kolmogorov-Smirnov menggunakan fungsi lillie.test. Uji ini memiliki hipotesis sebagai berikut,
+
+$H_0 : N $ (sisaan menyebar Normal)
+
+$H_1 : N $ (sisaan tidak menyebar Normal)
+
+```{r}
+library(nortest)
+(norm_model_tr <- lillie.test(resid2))
+```
+
+```{r}
+ifelse(norm_model_tr$p.value < 0.05, "Sisaan Tidak Menyebar Normal", "Sisaan Menyebar Normal")
+```
+
+```{r}
+library(nortest)
+(norm_model_tr3 <- lillie.test(resid_tr3))
+```
+
+```{r}
+ifelse(norm_model_tr3$p.value < 0.05, "Sisaan Tidak Menyebar Normal", "Sisaan Menyebar Normal")
+```
+Dari 2 test/uji diatas dapat disimpulkan sisaan menyebar normal
+
+## Homoskedatisitas
+# Breusch-Pagan
+Uji formal untuk mendeteksi homogenitas ragam sisaan dapat dilakukan dengan uji Breusch-Pagan menggunakan fungsi bptest. Uji ini memiliki hipotesis sebagai berikut,
+
+H0:var[ϵ]=σ2I (ragam homogen)
+
+H1:var[ϵ]≠σ2I (ragam tidak homogen)
+
+```{r}
+library(lmtest)
+(homogen_model_tr <- bptest(model_tr))
+```
+
+```{r}
+ifelse(homogen_model_tr$p.value < 0.05, "Ragam Tidak Homogen", "Ragam Homogen")
+```
+
+untuk model_tr3:
+```{r}
+library(lmtest)
+(homogen_model_tr3 <- bptest(model_tr3))
+```
+
+```{r}
+ifelse(homogen_model_tr3$p.value < 0.05, "Ragam Tidak Homogen", "Ragam Homogen")
+```
+
+# Transformasi Box-Cox
+```{r}
+library(MASS)
+
+bc_model <- boxcox(model, data = data,
+         lambda = seq(-2, 2, by = 0.1))
+```
+optimal lambda
+```{r}
+(optimal_lambda <- bc_model$x[which.max(bc_model$y)])
+```
+
+```{r}
+data$Y_tr <- ((data$Y)^optimal_lambda)/optimal_lambda
+```
+
+```{r}
+data2 <- data[,c(2,4)]
+```
+
+Membuat model
+```{r}
+model_tr4 <- lm(Y_tr~X, data=data2)
+summary(model_tr4)
+```
+
+## Autokorelasi
+# Durbin-Watson
+
+Uji formal untuk mendeteksi autokorelasi sisaan dapat dilakukan dengan uji Durbin-Watson menggunakan fungsi durbinWatsonTest. Uji ini memiliki hipotesis sebagai berikut,
+
+H0:E[ϵi,ϵj]=0 (tidak ada autokorelasi)
+
+H1:E[ϵi,ϵj]≠0 (ada autokorelasi)
+
+```{r}
+library(lmtest)
+(uji_autokol_tr4 <-dwtest(model_tr4,alternative="two.sided"))
+```
+
+```{r}
+ifelse(uji_autokol_tr4$p < 0.05, "Ada Autokorelasi", "Tidak Ada Autokorelasi")
+```
+
+Dari uji autokorelasi menggunakan Durbin-Watson test diatas dapat diketahui bahwa sisaan tidak saling bebas (ada autokorelasi)
+
+## Normalitas
+# Q-Q plot
+```{r}
+resid_tr4 <- model_tr4$resid
+qqnorm(resid_tr4)
+qqline(resid_tr4,col="red")
+```
+
+# Kolmogorov-Smirnov
+Uji formal untuk mendeteksi mormalitas sisaan dapat dilakukan dengan uji Kolmogorov-Smirnov menggunakan fungsi lillie.test. Uji ini memiliki hipotesis sebagai berikut,
+
+$H_0 : N $ (sisaan menyebar Normal)
+
+$H_1 : N $ (sisaan tidak menyebar Normal)
+
+```{r}
+library(nortest)
+(norm_model_tr4 <- lillie.test(resid_tr4))
+```
+```{r}
+ifelse(norm_model_tr4$p.value < 0.05, "Sisaan Tidak Menyebar Normal", "Sisaan Menyebar Normal")
+```
+Dari 2 test/uji diatas dapat disimpulkan sisaan menyebar normal
+
+## Homoskedatisitas
+# Breusch-Pagan
+Uji formal untuk mendeteksi homogenitas ragam sisaan dapat dilakukan dengan uji Breusch-Pagan menggunakan fungsi bptest. Uji ini memiliki hipotesis sebagai berikut,
+
+H0:var[ϵ]=σ2I (ragam homogen)
+
+H1:var[ϵ]≠σ2I (ragam tidak homogen)
+
+```{r}
+library(lmtest)
+(homogen_model_tr4 <- bptest(model_tr4))
+```
+
+```{r}
+ifelse(homogen_model_tr4$p.value < 0.05, "Ragam Tidak Homogen", "Ragam Homogen")
+```
+
+
+## KESIMPULAN
+Semua transformasi yang baru/sedang/sudah dipelajari tetap tidak bisa memenuhi semua asumsi.
+
+
+
+
+
+
+
+
+
+
